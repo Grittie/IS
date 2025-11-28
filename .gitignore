@@ -1,0 +1,164 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions / compiled files
+*.so
+*.dylib
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+.wheelhouse/
+*.manifest
+*.spec
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+.ENV/
+venv.bak/
+venv-*/
+
+# pyenv
+.python-version
+
+# IDEs / editors
+## VS Code
+.vscode/
+*.code-workspace
+
+## JetBrains (PyCharm, IntelliJ)
+ExpertSystem/.idea/
+*.iml
+*.iws
+*.ipr
+
+# Jupyter
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# Testing, coverage, caches
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checkers / linters
+.mypy_cache/
+.pyrightcache/
+.pylint.d/
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Environment / secrets
+.env
+credentials.json
+secrets.json
+*.pem
+*.key
+
+# Build systems
+cmake-build-*/
+
+# OpenCV / Machine Learning / model artifacts
+*.h5
+*.hdf5
+*.pb
+*.pbtxt
+*.ckpt
+*.tflite
+*.onnx
+*.pt
+*.pth
+*.tar.gz
+*.zip
+*.weights
+*.caffemodel
+*.prototxt
+*.t7
+*.npy
+*.npz
+*.bak
+*.tmp
+*.swp
+*~
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore LibriSpeech datasets
+speech-recognition/data/data_set/test-clean/
+speech-recognition/data/data_set/test-other/
+speech-recognition/data/data_set/**/*.wav
+speech-recognition/data/data_set/**/*.flac
+speech-recognition/data/data_set/**/*.mp3
+
+
+
+# Rust / Cargo
+target/
+**/target/
+# local cargo binaries (user-specific)
+.cargo/bin/
+
+# Rust compiled artifacts
+*.rlib
+*.rmeta
+*.crate
+
+# Platform/build artifacts
+*.exe
+*.dll
+*.pdb
+*.lib
+*.a
+*.la
+*.dSYM/
+
+# Profiling / coverage
+*.profraw
+*.profdata
+
+# General IDEs (add any other editor/project files you want ignored)
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Optional: Cargo.lock is usually committed for applications and ignored for libraries.
+# Uncomment the next line to ignore it (not recommended for application repos)
+# Cargo.lock
+
+

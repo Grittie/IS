@@ -1,0 +1,194 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[dutch]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{inconsolata}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    columns=fullflexible
+}
+
+\title{Intelligent System - Expert System in Rust}
+\author{Lars Grit}
+\date{\today}
+
+\begin{document}
+    \maketitle
+
+    \section{Beschrijving en test van de werking}
+
+    Mijn expertsystem is geschreven in Rust als een simpel productie-regelmachine met een knowledge base die feiten als Person en Parent opslaat. Ik heb dit in Rust geschreven zodat ik een reden had om het te leren!
+
+    \begin{itemize}
+        \item \texttt{Person\{name, gender\}}: bijvoorbeeld \texttt{"lars", Male}, \texttt{"lotte", Female}, enz.
+        \item \texttt{Parent\{parent, child\}}: bijvoorbeeld \texttt{Parent\{arie,ellis\}}.
+    \end{itemize}
+
+    Alle andere relaties zoals vader, moeder, broer of zus, oom, etc. Worden afgeleid door regels. Daarmee hou ik de initiële KB bewust zo klein mogelijk.
+
+    Voorbeeld van een testscenario (in \texttt{main}):
+    \begin{itemize}
+        \item Personen: Lars, Lotte, Ellis, Erik, Arie, Ariejan.
+        \item Ouders:
+        \begin{itemize}
+            \item Arie is ouder van Ellis en Ariejan.
+            \item Ellis en Erik zijn ouders van Lars en Lotte.
+        \end{itemize}
+    \end{itemize}
+
+    Na het uitvoeren van \texttt{infer\_all(\&mut kb)} print het programma o.a.:
+
+    \begin{itemize}
+        \item \texttt{Sons of erik: ["lars"]}
+        \item \texttt{Sons of arie: ["ariejan"]}
+        \item \texttt{Grandsons of arie: ["lars"]}%
+    \end{itemize}
+
+    De resultaten komen overeen met de familie boom (Lars is zoon van Erik, Ariejan is zoon van Arie)
+
+    \section{Futureproof ontwerp}
+
+    \subsection{Eenoudergezinnen}
+
+    Een oudergezin werdt al ondersteund: de KB bevat maar een Parent feit per kind (bijvoorbeeld alleen \texttt{Parent\{"ellis","lars"\}}).
+
+    De regels gebruiken alleen de ouder/child relatie, niet het aantal ouders per kind.
+
+    \subsection{M/V/X en genderneutraal}
+
+    De enumeratie \texttt{Gender} bevat naast \texttt{Male} en \texttt{Female} ook
+    \texttt{X} voor genderneutraal / non-binaire personen. De afgeleide feiten \texttt{Father} en
+    \texttt{Mother} worden alleen gemaakt als de persoon of \texttt{Male}
+    of \texttt{Female} is. In de toekomst zou ik nog een gender neutrale term kunnen toevoegen.
+
+    \subsection{Geslachtswijzigingen}
+
+    In de huidige versie heeft elke persoon precies één
+    \texttt{Gender} dat verandert kan worden.
+
+    \subsection{Huwelijk tussen personen van hetzelfde geslacht}
+
+    Het systeem werkt niet in termen van huwelijken, maar in termen
+    van de relationele feiten \texttt{Parent\{parent, child\}} en \texttt{Person}.
+    Daarom is een huwelijk tussen twee ouders van hetzelfde geslacht ondersteund.
+
+    \subsection{Huwelijken met drie personen}
+
+    Het systeem kan ook huwelijken met drie ouders aan er komen dan simpelweg drie \texttt{Parent} feiten per kind.
+
+    \newpage
+
+    \section{Forward chaining en backward chaining}
+
+    \subsection{Forward chaining}
+
+    Het systeem past \emph{forward chaining} toe via de functie \texttt{infer\_all}.
+    Daarin wordt in een lus herhaaldelijk een set regels aangeroepen:
+
+    \begin{lstlisting}[language=Rust]
+fn infer_all(kb: &mut KnowledgeBase) {
+    loop {
+        let mut changed = false;
+        changed |= infer_father_mother(kb);
+        changed |= infer_sibling(kb);
+        changed |= infer_uncle(kb);
+        changed |= infer_cousin(kb);
+        changed |= infer_nibling(kb);
+        changed |= infer_grandson(kb);
+        if !changed {
+            break;
+        }
+    }
+}
+    \end{lstlisting}
+
+    Elke \texttt{infer\_*} functie leest bestaande feiten en voegt eventueel nieuwe
+    afgeleide feiten toe aan de KB (bijvoorbeeld \texttt{Father}, \texttt{Sibling},
+    \texttt{Grandson}). Dit gaat door totdat er geen nieuwe feiten meer bijkomen:
+    dan is de KB "saturated".
+
+    \subsection{Backward chaining}
+
+    In deze oefening is geen volledige backward chaining geimplementeerd maar er zijn wel query functions die doelgericht zoeken feiten:
+
+    \begin{lstlisting}[language=Rust]
+fn sons_of(kb: &KnowledgeBase, parent_name: &str) -> Vec<&'static str> {
+    kb.facts
+      .iter()
+      .filter_map(|f| {
+          if let Fact::Father { father, child } = f {
+              if *father == parent_name && kb.has_person(child, Gender::Male) {
+                  Some(*child)
+              } else {
+                  None
+              }
+          } else {
+              None
+          }
+      })
+      .collect()
+}
+    \end{lstlisting}
+
+
+    \subsection{Permanente vs. tijdelijke feiten}
+
+    Afgeleide feiten (\texttt{Father}, \texttt{Mother}, \texttt{Sibling}, enz.) worden
+    permanent aan de \texttt{KnowledgeBase} toegevoegd. Ze blijven in de hashset staan.
+
+    \section{Inference engines in de praktijk}
+
+    Het hier gebruikte systeem is een eigen, minimalistische implementatie in Rust
+    en geen bestaande expert system shell. De code is wel gebaseerd op Experta die in de praktijk gebruikt wordt voor bijvoorbeeld configuratie-systemen.
+
+    Door het in Rust zelf te implementeren is het systeem wel klein maar niet geoptimaliseerd zoals bestaande oplossingen.
+
+    \section{Aanpak, code en reflectie}
+
+    \subsection{Aanpak}
+
+    De aanpak was als volgt:
+    \begin{enumerate}
+        \item Kiezen van een minimale set basisfeiten: \texttt{Person} en
+        \texttt{Parent}.
+        \item Defini\"eren van afgeleide feiten (\texttt{Father}, \texttt{Sibling},
+        \texttt{Uncle}, \texttt{Cousin}, \texttt{Nibling}, \texttt{Grandson}).
+        \item Implementeren van forward chaining regels in Rust die over de bestaande
+        feiten itereren en nieuwe feiten toevoegen tot er geen veranderingen
+        meer zijn.
+        \item Schrijven van simpele query\-functies (\texttt{sons\_of},
+        \texttt{grandsons\_of}) als lichte vorm van backward chaining.
+        \item Testen met een kleine familieboom gebaseerd op de eigen situatie.
+    \end{enumerate}
+
+    \subsection{Code}
+
+    De kern van de code bestaat uit:
+    \begin{itemize}
+        \item de \texttt{Fact} enum voor alle typen feiten;
+        \item de \texttt{KnowledgeBase} met een \texttt{HashSet<Fact>};
+        \item \texttt{infer\_father\_mother}, \texttt{infer\_sibling},
+        \texttt{infer\_uncle}, \texttt{infer\_cousin},
+        \texttt{infer\_nibling}, \texttt{infer\_grandson};
+        \item query\-functies zoals \texttt{sons\_of} en \texttt{grandsons\_of}.
+    \end{itemize}
+
+    \subsection{Reflectie}
+
+    Het bouwen van mijn expert systeem in rust was leuk maar wel erg uitdagend en heb meer gebruik gemaakt van outside sources dan dat ik had moeten doen voor een experta bijvoorbeeld dat veel werk voor je doet. Toch was het leuk om het te leren!
+
+    Het ontwerp is redelijk futureproof omdat:
+    \begin{itemize}
+        \item het aantal ouders per kind niet geforceerd is (dus eenouder\- en
+        drieoudergezinnen zijn mogelijk),
+        \item het geslacht expliciet als enum is gemodelleerd (M/V/X),
+    \end{itemize}
+
+    Een mogelijke vervolgstap zou zijn om een echte backward chaining laag toe te
+    voegen.
+
+\end{document}
